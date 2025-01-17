@@ -47,12 +47,24 @@ def search_course(
         headers={
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "en-US,en;q=0.9",
             "X-Requested-With": "XMLHttpRequest",
         },
     )
 
+def choose_course(course_id: str, jx0404id: str, cookies: httpx.Cookies) -> httpx.Response:
+    """
+    Choose course by course_id and jx0404id.
+    """
+    print(course_id, jx0404id)
+    return httpx.get(
+        f'https://bkzhjx.wh.sdu.edu.cn/jsxsd/xsxkkc/xxxkOper?kcid={course_id}&jx0404id={jx0404id}',
+        cookies=cookies,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+            "Accept-Encoding": "gzip, deflate, br",
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    )
 
 if __name__ == "__main__":
     try:
@@ -70,6 +82,26 @@ if __name__ == "__main__":
         cookie = interactive_login()
     else:
         print("cookies有效，免输入密码")
+    q = input("请输入搜索关键词：")
+    course_type = input("请输入课程类型（Bx 必修，Xx 限选，Ggxxk 公共选修课（任选），Faw 所有课程）：")  # type: ignore
+    if not course_type in ["Bx", "Xx", "Ggxxk", "Faw"]:
+        course_type:Literal['Bx','Xx','Ggxxk','Faw'] = "Faw"
+    response:dict[str, list[dict[str, str]]] = search_course(q, cookie, course_type=course_type).json()
+    # print(response.get('aaData', []))
+    res = {}
+    id = 0
+    print('搜索结果\n序号\t课程名称\t授课班级\t项目名称\t上课时间\t课程性质\t考核方式\t上课地点\t剩余人数\t学分\t')
+    for items in response.get('aaData', []):
+        id += 1
+        print(id, end=' ')
+        print(items.get('kcmc', ''), items.get('ktmc', ''),items.get('xmmc',''), items.get('sksj', ''), items.get('kcxzmc', ''), items.get('khfs', ''), items.get('skdd', ''), items.get('syrs', ''), items.get('xf', ''))
+        res[id] = items
+    items = res[int(input("请输入课程序号："))]
+    while True:
+        a = choose_course(items.get('kch', ''),items.get('jx0404id',''), cookie)
+        # print(a.text)
+        if a.json().get('success', False):
+            print("选课成功")
+            break
+        print("选课失败，重试中，按ctrl+c退出")
 
-    response = search_course("Unix", cookie)
-    print(response.text)
