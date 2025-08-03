@@ -61,7 +61,7 @@ def webpage_login(
     username: str, password: str, platform_fingerprint: str, service: str = ""
 ):
     """
-    Using webpage to login, powered by execjs, BeautifulSoup4 to parse the html and httpx to send requests.
+    Using webpage to login, BeautifulSoup4 to parse the html and httpx to send requests.
     """
     if service:
         page = httpx.get(f"https://pass.sdu.edu.cn/cas/login?service={service}")

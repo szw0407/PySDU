@@ -10,19 +10,24 @@ def bkzhjx_login(username:str , password:str , platform_fingerprint: str) -> Coo
     """
     Login to bkzhjx.wh.sdu.edu.cn, and return the cookies.
     """
-    sso_redirect = httpx.get(r'http://bkzhjx.wh.sdu.edu.cn/sso.jsp')
-    # print(sso_redirect.headers, sso_redirect.cookies)
-    sso_redirect = httpx.get(sso_redirect.headers['Location'])
-    # print(sso_redirect.headers, sso_redirect.cookies)
+    redirect_url = ""
+    i=0
+    while not redirect_url.startswith('http://bkzhjx.wh.sdu.edu.cn'):
+        i+=1
+        print("logging in for {} times".format(i))
+        sso_redirect = httpx.get(r'http://bkzhjx.wh.sdu.edu.cn/sso.jsp')
+        # print(sso_redirect.headers, sso_redirect.cookies)
+        sso_redirect = httpx.get(sso_redirect.headers['Location'])
+        # print(sso_redirect.headers, sso_redirect.cookies)
 
-    bzb_njw = sso_redirect.cookies['bzb_njw']
-    SERVERID = sso_redirect.cookies['SERVERID']
-
-    page2 = webpage_login(username, password, platform_fingerprint, r'http%3A%2F%2Fbkzhjx.wh.sdu.edu.cn%2Fsso.jsp')
-    if page2.status_code != 302:
-        print('Check your username and password.')
-        raise SystemError('Login failed: No redirect. to bkzhjx.wh.sdu.edu.cn')
-    redirect_url = page2.headers['Location']
+        bzb_njw = sso_redirect.cookies['bzb_njw']
+        SERVERID = sso_redirect.cookies['SERVERID']
+        page2 = webpage_login(username, password, platform_fingerprint, r'http%3A%2F%2Fbkzhjx.wh.sdu.edu.cn%2Fsso.jsp')
+        if page2.status_code != 302:
+            print('Check your username and password.')
+            raise SystemError('Login failed: No redirect. to bkzhjx.wh.sdu.edu.cn')
+        redirect_url = page2.headers['Location']
+    
     page = httpx.get(redirect_url)
 
     headers = {
